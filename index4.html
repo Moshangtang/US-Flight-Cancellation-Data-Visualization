@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+    <style type="text/css">
+
+      h1{
+        text-align: center;
+      }
+
+      h2{
+        text-align: center;
+      }
+
+      h3{
+        text-align: center;
+      }
+
+      circle.dimple-series-0{
+      fill: red;
+      }
+
+      circle{
+      fill: red;
+      }
+
+      svg{
+        display: block;
+        margin: auto;
+      }
+
+      input[type=button] {
+        padding:5px 15px;
+        background:#02b3e4!important;
+        border:0 none;
+        cursor:pointer;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        width: auto;
+      }
+
+      input{
+        font-weight: 600;
+        width: 30px;
+        color: #fff;
+        text-transform: uppercase;
+        padding:5px 15px;
+        background: #f48024;
+        border-color: #9B6114;
+        cursor:pointer;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+      }
+
+
+    </style>
+    <script type="text/javascript">
+      function draw(data) {
+
+        d3.select('#flights').remove();
+        d3.selectAll('div').html('');
+
+        d3.select('div')
+          .append('input')
+          .attr('type','button')
+          .attr('value', 'Click For Airline Details!')
+          .attr('onclick','d3.csv("2008cancel.csv", detailData)');
+
+        d3.select('svg').remove();
+        d3.select('body')
+          .append('h3')
+          .attr('id','flights')
+          .text("Cancellation Rate for All Airlines in US");
+
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", 1100)
+                    .attr("height", 600)
+                    .append('g')
+                    .attr('class','chart');
+
+          var myChart = new dimple.chart(svg, data);
+          var x = myChart.addCategoryAxis("x", "UniqueCarrier");
+          var y = myChart.addMeasureAxis("y", "CancelRate");
+          x.title = 'Air Flights';
+          y.title = 'Cancellation Rate(%)';
+          myChart.addSeries('CancellationCode', dimple.plot.bar);
+          myChart.addLegend(1000, 50, 70, 800, 'right');
+          myChart.draw();
+
+        };
+
+      function detailData(data){
+
+        d3.select('div').html('');
+        d3.select('#flight_button').remove();
+        d3.select('#flights').remove();
+
+        d3.select('div')
+          .append('input')
+          .attr('type','button')
+          .attr('value', 'Back to All Airlines!')
+          .attr('onclick','d3.csv("2008cancel.csv", draw)');
+
+        var buttonNames = ['All','MQ','AA','OO','WN','UA','XE','YV','9E','DL','US','OH','EV','CO','B6','NW','FL','HA','F9','AQ'];
+
+        function updateflight(flight){
+          if(flight !== 'All') {
+
+            d3.select('#flights').remove();
+            d3.select('body')
+              .append('h3')
+              .attr('id','flights')
+              .text("Cancellation Rate for " + flight + " vs. Months");
+
+            d3.select('svg').remove();
+            var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", 1100)
+                    .attr("height", 600)
+                    .append('g')
+                    .attr('class','chart');
+
+            var flightData = dimple.filterData(data,'UniqueCarrier',flight);
+
+            var myChart = new dimple.chart(svg, flightData);
+            var x = myChart.addCategoryAxis("x", "Month");
+            var y = myChart.addMeasureAxis("y", "CancelRate");
+            x.title = 'Months';
+            y.title = 'Cancellation Rate(%)';
+            var mySeries = myChart.addSeries('CancellationCode', dimple.plot.bar);
+            mySeries.addOrderRule(["Weather", "Carrier", "NAS", "Security"])
+            myChart.addLegend(1000, 50, 70, 800, 'right');
+            myChart.draw(30);
+
+            var myChart2 = new dimple.chart(svg);
+            var x = myChart2.addCategoryAxis("x", "Month");
+            var y = myChart2.addMeasureAxis("y", "CancelRate");
+            y.showGridlines = false;
+            x.title = '';
+            y.title = '';
+            var s1 = myChart2.addSeries(null, dimple.plot.scatter,[x,y]);
+            var s2 = myChart2.addSeries(null, dimple.plot.line,[x,y]);
+            s1.data = flightData;
+            s2.data = flightData;
+            var s3 = myChart2.addSeries(null, dimple.plot.scatter,[x,y]);
+            var s4 = myChart2.addSeries(null, dimple.plot.line,[x,y]);
+            var weatherdata = dimple.filterData(flightData,'CancellationCode','Weather');
+            s3.data = weatherdata;
+            s4.data = weatherdata;
+            myChart2.draw(1200);
+          } else {
+            detailData(data);
+          }
+        };
+
+        var buttons = d3.select('body')
+                        .append('div')
+                        .attr('id','flight_button')
+                        .selectAll('input')
+                        .data(buttonNames)
+                        .enter()
+                        .append('input')
+                        .attr('value',function(d){return d;});
+
+        buttons.on('click',function(d){
+          d3.select(this)
+            .transition()
+            .duration(500);
+          updateflight(d);
+        })
+
+        d3.select('body')
+          .append('h3')
+          .attr('id','flights')
+          .text("Cancellation Rate for All Airlines vs. Months");
+
+        d3.select('svg').remove();
+
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", 1100)
+                    .attr("height", 600)
+                    .append('g')
+                    .attr('class','chart');
+
+          var myChart = new dimple.chart(svg,data);
+          var x = myChart.addCategoryAxis("x", "Month");
+          var y = myChart.addMeasureAxis("y", "CancelRate");
+          x.title = 'Months';
+          y.title = 'Cancellation Rate(%)';
+          myChart.addSeries('CancellationCode', dimple.plot.bar,[x,y]);
+          myChart.addLegend(1000, 50, 70, 800, 'right');
+          myChart.draw(30);
+
+          var myChart2 = new dimple.chart(svg);
+          var x = myChart2.addCategoryAxis("x", "Month");
+          var y = myChart2.addMeasureAxis("y", "CancelRate");
+          y.showGridlines = false;
+          x.title = '';
+          y.title = '';
+          var s1 = myChart2.addSeries(null, dimple.plot.scatter,[x,y]);
+          var s2 = myChart2.addSeries(null, dimple.plot.line,[x,y]);
+          s1.data = data;
+          s2.data = data;
+          var s3 = myChart2.addSeries(null, dimple.plot.scatter,[x,y]);
+          var s4 = myChart2.addSeries(null, dimple.plot.line,[x,y]);
+          var weatherdata = dimple.filterData(data,'CancellationCode','Weather');
+          s3.data = weatherdata;
+          s4.data = weatherdata;
+          myChart2.draw(1200);
+      };
+    </script>
+  </head>
+  <body>
+    <h1>Choose your airline and time to fly!</h1>
+    <h2>(Explore the cancellation rate as well as its relationship with months for each airline in US according to the data from 2008)</h2>
+    <p>It would have been the most disappointing thing if your flight were cancelled when you were just ready and looking forward to boarding. Here is the visual cancellation data for the year 2008 including 19 airlines in US. It tells us Envoy Air (MQ) has the most cancellation rate while Frontier Airlines (F9) has the least cancellation amount. By clicking for the airline details, we can see the months December, January and February have the higher cancellation rate than months in fall. Thus, this might be a better choice if you plan to travel in fall. Note that the trend of cancellation rate due to weather is similar to the trend of all cancellation rate for most of the carriers, weather is likely to be the major reason for the cancellation rate fluctuation.
+    </p>
+    <p><b>Reasons for cancellation:</b><br>
+       <b>Weather: </b>The cancellation due to the weather condition.<br>
+       <b>Carrier: </b>The cancellation due to the circumstances of the aircraft.<br>
+       <b>NAS: </b>The cancellation due to National Aviation System such as airtraffic control.<br>
+       <b>Security: </b>The cancellation due to the security alert.<br>
+    </p>
+    <div id='click'>
+    </div>
+    <script type="text/javascript">
+
+      d3.csv("2008cancel.csv", draw);
+    </script>
+  </body>
+</html>

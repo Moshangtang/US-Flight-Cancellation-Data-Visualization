@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+    <style type="text/css">
+
+      h1{
+        text-align: center;
+      }
+
+      h2{
+        text-align: center;
+      }
+
+      h3{
+        text-align: center;
+      }
+
+      svg{
+        display: block;
+        margin: auto;
+      }
+
+      input[type=button] {
+        padding:5px 15px;
+        background:#02b3e4!important;
+        border:0 none;
+        cursor:pointer;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        width: auto;
+      }
+
+      input{
+        font-weight: 600;
+        width: 40px;
+        color: #fff;
+        text-transform: uppercase;
+        padding:5px 15px;
+        background: #f48024;
+        border-color: #9B6114;
+        cursor:pointer;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+      }
+
+
+    </style>
+    <script type="text/javascript">
+      function draw(data) {
+
+        d3.select('#flights').remove();
+        d3.selectAll('div').html('');
+
+        d3.select('div')
+          .append('input')
+          .attr('type','button')
+          .attr('value', 'Click For Flight Details!')
+          .attr('onclick','d3.csv("2008cancel.csv", detailData)');
+
+        d3.select('svg').remove();
+        d3.select('body')
+          .append('h3')
+          .attr('id','flights')
+          .text("Cancellation Amount for All Flights in US");
+
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", 1100)
+                    .attr("height", 600)
+                    .append('g')
+                    .attr('class','chart');
+
+          var myChart = new dimple.chart(svg, data);
+          var x = myChart.addCategoryAxis("x", "UniqueCarrier");
+          var y = myChart.addMeasureAxis("y", "Cancelled");
+          x.title = 'Air Flights';
+          y.title = 'Number of Cancellation';
+          myChart.addSeries('CancellationCode', dimple.plot.bar);
+          myChart.addLegend(1000, 50, 70, 800, 'right');
+          myChart.draw();
+
+        };
+
+      function detailData(data){
+
+        d3.select('div').html('');
+        d3.select('#flight_button').remove();
+        d3.select('#flights').remove();
+
+        d3.select('div')
+          .append('input')
+          .attr('type','button')
+          .attr('value', 'Back to All Flights!')
+          .attr('onclick','d3.csv("2008cancel.csv", draw)');
+
+        var buttonNames = ['All','MQ','AA','OO','WN','UA','XE','YV','9E','DL','US','OH','EV','CO','B6','NW','FL','HA','F9','AQ'];
+
+        function updateflight(flight){
+          if(flight !== 'All') {
+
+            d3.select('#flights').remove();
+            d3.select('body')
+              .append('h3')
+              .attr('id','flights')
+              .text("Cancellation Amount for " + flight + " vs. Months");
+
+            d3.select('svg').remove();
+            var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", 1100)
+                    .attr("height", 600)
+                    .append('g')
+                    .attr('class','chart');
+
+            var flightData = dimple.filterData(data,'UniqueCarrier',flight);
+
+            var myChart = new dimple.chart(svg, flightData);
+            var x = myChart.addCategoryAxis("x", "Month");
+            var y = myChart.addMeasureAxis("y", "Cancelled");
+            x.title = 'Months';
+            y.title = 'Number of Cancellation';
+            myChart.addSeries('CancellationCode', dimple.plot.bar);
+            myChart.addLegend(1000, 50, 70, 800, 'right');
+            myChart.draw();
+          } else {
+
+
+            detailData(data);
+          }
+        };
+
+        var buttons = d3.select('body')
+                        .append('div')
+                        .attr('id','flight_button')
+                        .selectAll('input')
+                        .data(buttonNames)
+                        .enter()
+                        .append('input')
+                        .attr('value',function(d){return d;});
+
+        buttons.on('click',function(d){
+          d3.select(this)
+            .transition()
+            .duration(500);
+          updateflight(d);
+        })
+
+        d3.select('body')
+          .append('h3')
+          .attr('id','flights')
+          .text("Cancellation Amount for All Flights vs. Months");
+
+        d3.select('svg').remove();
+
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", 1100)
+                    .attr("height", 600)
+                    .append('g')
+                    .attr('class','chart');
+
+          var myChart = new dimple.chart(svg, data);
+          var x = myChart.addCategoryAxis("x", "Month");
+          var y = myChart.addMeasureAxis("y", "Cancelled");
+          x.title = 'Months';
+          y.title = 'Number of Cancellation';
+          myChart.addSeries('CancellationCode', dimple.plot.bar);
+          myChart.addLegend(1000, 50, 70, 800, 'right');
+          myChart.draw();
+
+
+      };
+    </script>
+  </head>
+  <body>
+    <h1>Choose your flight and time to fly!</h1>
+    <h2>(Explore the relationship between cancellation amount and months for each flight in US according to the data from 2008)</h2>
+    <p>It would have been the most disappointing thing if your flight were cancelled when you were just ready and looking forward to boarding. Here is the visual cancellation data for the year 2008 including 19 flights in US. It tells us Envoy Air (MQ)has the most cancellation amount while Aloha Airlines (AQ) has the least cancellation amount. By clicking for the flight details, we can see the months December, January and Feburary have the higher cancellation than months in Fall. Thus, this might be a better choice if you plan to travel in Fall.
+    </p>
+    <div id='click'>
+    </div>
+    <script type="text/javascript">
+
+      d3.csv("2008cancel.csv", draw);
+    </script>
+  </body>
+</html>
